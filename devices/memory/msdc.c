@@ -1,4 +1,4 @@
-#include "log.h"
+#include <log.h>
 #include <devices.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -72,22 +72,16 @@ void mmc_handle_acmd(msdc_device* device){
             break;
     }
 }
-void msdc_read_block(msdc_device* device){
+void msdc_read_blocks(msdc_device* device, uint32_t count){
     if(device->mmc_fd == 0){
         PANIC_MSG("mmc: fd of mmc disk image is 0\n");
     }
     uint32_t address = device->cmd.arg * SD_BLOCKSIZE;
     lseek(device->mmc_fd, address, SEEK_SET);
-    void* buffer = malloc(SD_BLOCKSIZE);
-    uint32_t to_push = read(device->mmc_fd, buffer, SD_BLOCKSIZE);
+    void* buffer = malloc(SD_BLOCKSIZE * count);
+    uint32_t to_push = read(device->mmc_fd, buffer, SD_BLOCKSIZE * count);
     msdc_push_data(device, buffer, to_push);
     free(buffer);
-}
-void msdc_read_blocks(msdc_device* device){
-    for(uint32_t i = 0; i < device->cmd.blocks; i++){
-        msdc_read_block(device);
-        device->cmd.arg++;
-    }
 }
 
 // void msdc_read_bootdata(msdc_device* device){
@@ -123,10 +117,10 @@ void mmc_handle_cmd(msdc_device* device){
                 PANIC_MSG("new blocklen %d is net equal to %d blocks!\n", device->cmd.arg, SD_BLOCKSIZE);
             break;
         case 17:
-            msdc_read_block(device);
+            msdc_read_blocks(device, 1);
             break;
         case 18:
-            msdc_read_blocks(device);
+            msdc_read_blocks(device, device->cmd.blocks);
             break;
         case 8:
             device->cmd.resp[0] = 0xaa;
@@ -147,19 +141,12 @@ void mmc_handle_cmd(msdc_device* device){
 
 void devices_msdc_emmc_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long valuel, void* user_data){
     device* dev = (device*) user_data;
-    (void)dev;
-    (void)uc;
-    (void)size;
-    (void)type;
     uint64_t reg = ((address - dev->address)>>2)<<2;
     if(type == UC_MEM_READ){
         uc_mem_read(uc, address, &valuel, sizeof(valuel));
     }
     uint32_t value = valuel;
-    (void)reg;
-    (void)value;
     msdc_device* device = &msdc_devices[(dev->address>>16)&1];
-    (void)device;
     switch(reg){
         case 0x34:
             device->cmd.cmd = value & ((1<<6)-1);
