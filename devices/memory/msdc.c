@@ -34,7 +34,7 @@ typedef struct {
     mmc_cmd cmd;
     mmc_data_buffer data_buff;
 
-    uint32_t mmc_fd;
+    int mmc_fd;
     uint32_t mmc_size;
 } msdc_device;
 

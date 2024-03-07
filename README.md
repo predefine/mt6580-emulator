@@ -11,4 +11,4 @@ make emu
 ```
 
 # Bugs
-1. msdc reporting uncorrect info if emmc disk image is not exists
+1. msdc is buggy if mmc_fd is zero
