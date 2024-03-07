@@ -135,8 +135,6 @@ void mmc_handle_cmd(msdc_device* device){
             #define EMMC_IN_BLOCKS (device->mmc_size>>(10 + SD_BLOCK_SHIFT))
             device->cmd.resp[2] = (SD_BLOCK_SHIFT << 16) | ((EMMC_IN_BLOCKS >> 16) & 0x3f);
             device->cmd.resp[1] = (EMMC_IN_BLOCKS &0xffff) << 16;
-            // device->cmd.resp[1] = ntohl((SD_BLOCK_SHIFT << 16) | ((device->mmc_size>>16) & 0xffff));
-            // device->cmd.resp[2] = ntohl((device->mmc_size & 0x3f) << 16);
             break;
         case 55:
             device->cmd.app_cmd = 1;
@@ -230,9 +228,12 @@ void devices_msdc_emmc_init(uc_engine* uc, void* devptr){
     }
 
     msdc_devices[0].mmc_fd = open("emmc_build/emmc.img", O_RDONLY);
-    struct stat st;
-    fstat(msdc_devices[0].mmc_fd, &st);
-    msdc_devices[0].mmc_size = st.st_size;
+    if(msdc_devices[0].mmc_fd > 0){
+        struct stat st;
+        fstat(msdc_devices[0].mmc_fd, &st);
+        msdc_devices[0].mmc_size = st.st_size;
+    } else
+        msdc_devices[0].mmc_size = 0;
 }
 
 const device devices_msdc_emmc = {
