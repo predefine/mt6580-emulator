@@ -35,6 +35,7 @@ void mem_read_unmapped(uc_engine* uc, uc_mem_type type, uint64_t address, int si
     printf("ERROR! detected %s on unmapped 0x%lx-0x%lx\n", type == UC_MEM_READ_UNMAPPED ? "read" : "write", address, address + size);
 }
 
+#ifdef DEBUG_MEM
 void mem_info(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
     (void)uc;
     (void)size;
@@ -44,12 +45,13 @@ void mem_info(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long 
     if(type == UC_MEM_READ)
         uc_mem_read(uc, address, &value, size);
     //if(address < RAM_OFFSET || address > RAM_OFFSET + RAM_SIZE - 1)){
-    if(/*(address < 0x11005000 || address > 0x11007000) &&*/ (address < RAM_OFFSET ) && address > 64*1024+SRAM_OFFSET){
+    if((address < 0x11005000 || address > 0x11007000) && (address < RAM_OFFSET ) && address > 64*1024+SRAM_OFFSET){
         uint32_t r_pc;
         uc_reg_read(uc, UC_ARM_REG_PC, &r_pc);
-        // printf("INFO! detected %s at 0x%lx-0x%lx with value=0x%lx at pc=0x%x\n", type == UC_MEM_READ ? "read" : "write", address, address+size, value, r_pc);
+        printf("INFO! detected %s at 0x%lx-0x%lx with value=0x%lx at pc=0x%x\n", type == UC_MEM_READ ? "read" : "write", address, address+size, value, r_pc);
     }
 }
+#endif
 
 int main(){
     uc_engine* engine;
@@ -163,12 +165,14 @@ int main(){
          printf("unmapped read&write hook add failed with error %u %s!\n", err, uc_strerror(err));
     }
 
+#ifdef DEBUG_MEM
     uc_hook mem_info_hook;
     err = uc_hook_add(engine, &mem_info_hook,
                 UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, mem_info, NULL, 1, 0);
     if (err){
          printf("mem read&write hook add failed with error %u %s!\n", err, uc_strerror(err));
     }
+#endif
 
     printf("adding devices...\n");
     for(int i = 0; devices[i] != NULL; i++){

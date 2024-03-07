@@ -2,8 +2,11 @@
 OUT := emu
 OBJECTS := $(patsubst %.c,%.o,$(shell find -name "*.c" -type f ! -path "./test/*"))
 CFLAGS := -I. -Wall -Wextra -lunicorn
-ifeq ($(DEBUG),1)
+ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
+endif
+ifeq ($(DEBUG),m)
+	CFLAGS += -DDEBUG_MEM
 endif
 
 $(OUT): $(OBJECTS)
