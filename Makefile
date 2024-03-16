@@ -1,7 +1,8 @@
 
 OUT := emu
-OBJECTS := $(patsubst %.c,%.o,$(shell find -name "*.c" -type f ! -path "./test/*"))
-CFLAGS := -I. -Wall -Wextra -lunicorn -lSDL2
+DIRS := src devices dtc/libfdt
+OBJECTS := $(patsubst %.c,%.o,$(shell find $(DIRS) -name "*.c" -type f))
+CFLAGS := -Iinclude -Wall -Wextra -lunicorn -lSDL2 -Idtc/libfdt
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
 endif

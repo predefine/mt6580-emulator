@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <devices.h>
+#include <libfdt.h>
 
 #define BOOTVECTOR_RESET KERNEL_OFFSET
 
@@ -25,6 +26,9 @@
 
 #define SRAM_OFFSET 0x0100000
 #define SRAM_SIZE 64*1024
+uint32_t be32_to_le(uint32_t num){
+    return ((num>>24)&0xff) | ((num<<8)&0xff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000);
+}
 
 void mem_read_unmapped(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
     (void)uc;
@@ -48,10 +52,6 @@ void mem_info(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long 
     printf("INFO! detected %s at 0x%lx-0x%lx with value=0x%lx at pc=0x%x\n", type == UC_MEM_READ ? "read" : "write", address, address+size, value, r_pc);
 }
 #endif
-
-#define EXTRACT_BYTE(x, n)	((unsigned long long)((uint8_t *)&x)[n])
-#define CPU_TO_FDT32(x) ((EXTRACT_BYTE(x, 0) << 24) | (EXTRACT_BYTE(x, 1) << 16) | \
-			 (EXTRACT_BYTE(x, 2) << 8) | EXTRACT_BYTE(x, 3))
 
 uc_engine* engine;
 
@@ -161,7 +161,7 @@ void find_dtb_in_kernel(uint32_t offset, uint32_t* dtb_offset, uint32_t* dtb_siz
     *dtb_offset = offset + kernel_size;
     uint32_t _dtb_size;
     uc_mem_read(engine, (*dtb_offset)+0x4, &_dtb_size, sizeof(_dtb_size));
-    *dtb_size = CPU_TO_FDT32(_dtb_size);
+    *dtb_size = cpu_to_fdt32(_dtb_size);
 }
 
 void copy_mem(uint32_t offset, uint32_t new_offset, uint32_t size){
@@ -170,6 +170,28 @@ void copy_mem(uint32_t offset, uint32_t new_offset, uint32_t size){
         uc_mem_read(engine, offset + i, &buffer, sizeof(buffer));
         uc_mem_write(engine, new_offset + i, &buffer, sizeof(buffer));
     }
+}
+
+void load_dtb(uint32_t kernel, uint32_t new_offset){
+    uint32_t dtb_offset, dtb_size;
+    find_dtb_in_kernel(kernel, &dtb_offset, &dtb_size);
+    copy_mem(dtb_offset, new_offset, dtb_size);
+    uc_reg_write(engine, UC_ARM_REG_R2, &new_offset);
+}
+
+void setup_dtb(uint32_t dtb_offset){
+    uint32_t _dtb_size;
+    uc_mem_read(engine, (dtb_offset)+0x4, &_dtb_size, sizeof(_dtb_size));
+    uint32_t dtb_size = cpu_to_fdt32(_dtb_size);
+    char* fdt = malloc(dtb_size + 0x10000);
+    uc_mem_read(engine, dtb_offset, fdt, dtb_size);
+    fdt_open_into(fdt, fdt, dtb_size + 0x10000);
+    int offset = fdt_path_offset(fdt, "/chosen");
+    if(offset < 0)
+        PANIC_MSG("error %s!\n", fdt_strerror(offset));
+    uint64_t videol_fb = be32_to_le(FRAMEBUFFER_ADDRESS);
+    fdt_setprop_cell(fdt, offset, "atag,videolfb", videol_fb);
+    uc_mem_write(engine, dtb_offset, fdt, dtb_size + 0x10000);
 }
 
 int main(){
@@ -186,11 +208,9 @@ int main(){
 
     devices_probe();
 
-    uint32_t dtb_offset, dtb_size, remap_offset;
-    remap_offset = KERNEL_DTB_OFFSET;
-    find_dtb_in_kernel(KERNEL_OFFSET, &dtb_offset, &dtb_size);
-    copy_mem(dtb_offset, remap_offset, dtb_size);
-    uc_reg_write(engine, UC_ARM_REG_R2, &remap_offset);
+
+    load_dtb(KERNEL_OFFSET, KERNEL_DTB_OFFSET);
+    setup_dtb(KERNEL_DTB_OFFSET);
 
     emu_start(BOOTVECTOR_RESET);
 

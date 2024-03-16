@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <unicorn/unicorn.h>
 
+#define FRAMEBUFFER_ADDRESS 0xbf000000
+
 typedef struct {
     uint64_t address;
     uint64_t size;

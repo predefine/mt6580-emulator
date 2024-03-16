@@ -79,7 +79,7 @@ void framebuffer_exit(uc_engine* uc, void* devptr){
 }
 
 device devices_framebuffer = {
-    .address = 0xbf100000,
+    .address = FRAMEBUFFER_ADDRESS,
     .size = WIDTH*HEIGHT*4,
     .init = framebuffer_init,
     .callback = framebuffer_callback,
