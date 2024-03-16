@@ -19,18 +19,18 @@ SDL_Thread* update_thread;
 void framebuffer_init(uc_engine* uc, void* devptr){
     (void)uc;
     (void)devptr;
+
+    if(SDL_VideoInit(NULL) != 0)
+        PANIC_MSG("SDL2 Video Subsystem init failed!\n");
+
     window = SDL_CreateWindow("MT6580 Emulator",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                               WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
-    if(window == NULL){
-        printf("SDL2 window init failed!\n");
-        exit(-1);
-    }
+    if(window == NULL)
+        PANIC_MSG("SDL2 window init failed!\n");
     renderer = SDL_CreateRenderer(window, -1,  SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
-    if(renderer == NULL){
-        printf("SDL2 renderer init failed!\n");
-        exit(-1);
-    }
+    if(renderer == NULL)
+        PANIC_MSG("SDL2 renderer init failed!\n");
     fbtext = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xff);
     SDL_RenderClear(renderer);
