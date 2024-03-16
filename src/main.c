@@ -192,6 +192,7 @@ void setup_dtb(uint32_t dtb_offset){
     uint64_t videol_fb = be32_to_le(FRAMEBUFFER_ADDRESS);
     fdt_setprop_cell(fdt, offset, "atag,videolfb", videol_fb);
     uc_mem_write(engine, dtb_offset, fdt, dtb_size + 0x10000);
+    free(fdt);
 }
 
 int main(){
