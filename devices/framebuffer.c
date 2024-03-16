@@ -20,8 +20,8 @@ void framebuffer_init(uc_engine* uc, void* devptr){
     (void)uc;
     (void)devptr;
 
-    if(SDL_VideoInit(NULL) != 0)
-        PANIC_MSG("SDL2 Video Subsystem init failed!\n");
+    if(SDL_Init(SDL_INIT_VIDEO) != 0)
+        PANIC_MSG("SDL2 init failed!\n");
 
     window = SDL_CreateWindow("MT6580 Emulator",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
