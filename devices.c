@@ -23,30 +23,18 @@ extern device devices_usbphy;
 extern device devices_usb0;
 extern device devices_display_pwm;
 extern device devices_spm;
+extern device devices_framebuffer;
 
 device devices_uboot_bug_address_1 = {
     .address = 0x8000000,
     .size = 0x1000,
     .name = "Uboot bug address 1"
 };
-
-// device devices_uboot_random_address_1 = {
-//     .address = 0xa0000000,
-//     .size = 0x1000,
-//     .name = "Uboot random address 1"
-// };
-
 device devices_uboot_random_address_2 = {
     .address = 0x7e198000,
     .size = 0x1000,
     .name = "Uboot random address 2"
 };
-
-// device devices_dramc = {
-//     .address = 0xc0000000,
-//     .size = 0x1000,
-//     .name = "Dram controller"
-// };
 
 device *devices[] = {
     &devices_timers_gpt,
@@ -73,5 +61,6 @@ device *devices[] = {
     &devices_usb0,
     &devices_display_pwm,
     &devices_spm,
+    &devices_framebuffer,
     NULL
 };

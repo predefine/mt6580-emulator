@@ -2,11 +2,12 @@
 #include <unicorn/arm.h>
 // #include <udbserver.h>
 #include <stdio.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <devices.h>
 
-#define BOOTVECTOR_RESET 0x81e00000
+#define BOOTVECTOR_RESET KERNEL_OFFSET
 
 // #define BOOTROM_OFFSET 0
 // #define BOOTROM_SIZE 0x100000
@@ -19,7 +20,10 @@
 #define UBOOT_OFFSET 0x81e00000-0x200
 #define UBOOT_SIZE 0x800000
 #define UBOOT_FILE "../u-boot/out/u-boot-mtk.bin"
-// #define UBOOT_FILE "lk.bin"
+
+#define KERNEL_OFFSET 0x80008000
+#define KERNEL_SIZE 0x800000
+#define KERNEL_FILE "kernel"
 
 #define RAM_OFFSET 0x80000000
 #define RAM_SIZE 0x80000000
@@ -45,24 +49,42 @@ void mem_info(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long 
     if(type == UC_MEM_READ)
         uc_mem_read(uc, address, &value, size);
     //if(address < RAM_OFFSET || address > RAM_OFFSET + RAM_SIZE - 1)){
-    if((address < 0x11005000 || address > 0x11007000) && (address < RAM_OFFSET ) && address > 64*1024+SRAM_OFFSET){
+    // if((address < 0x11005000 || address > 0x11007000) && (address < RAM_OFFSET ) && address > 64*1024+SRAM_OFFSET){
         uint32_t r_pc;
         uc_reg_read(uc, UC_ARM_REG_PC, &r_pc);
         printf("INFO! detected %s at 0x%lx-0x%lx with value=0x%lx at pc=0x%x\n", type == UC_MEM_READ ? "read" : "write", address, address+size, value, r_pc);
-    }
+    // }
 }
 #endif
 
+#define EXTRACT_BYTE(x, n)	((unsigned long long)((uint8_t *)&x)[n])
+#define CPU_TO_FDT32(x) ((EXTRACT_BYTE(x, 0) << 24) | (EXTRACT_BYTE(x, 1) << 16) | \
+			 (EXTRACT_BYTE(x, 2) << 8) | EXTRACT_BYTE(x, 3))
+
+uc_engine* engine;
+
+void emu_exit(){
+    printf("Emulator terminating...\n");
+    for(int i = 0; devices[i] != NULL; i++){
+        device* dev = devices[i];
+        if(dev->exit){
+            printf("Exiting from %s!\n", dev->name);
+            dev->exit(engine, (void*)dev);
+        }
+    }
+    printf("bye bye!\n");
+    exit(0);
+}
+
 int main(){
-    uc_engine* engine;
     uc_err err;
 
     if(uc_open(UC_ARCH_ARM, UC_MODE_LITTLE_ENDIAN | UC_MODE_THUMB, &engine) != UC_ERR_OK){
-        printf("uc_open failed :(");
+        printf("uc_open failed :(\n");
         return -1;
     }
     if(uc_ctl_set_cpu_model(engine, UC_CPU_ARM_CORTEX_A7) != UC_ERR_OK){
-        printf("uc_ctl_set_cpu_model failed :(");
+        printf("uc_ctl_set_cpu_model failed :(\n");
         return -1;
     }
 
@@ -140,11 +162,11 @@ int main(){
     // Uboot
     char *uboot = (char*)malloc(UBOOT_SIZE*sizeof(char));
     if ((fd = open(UBOOT_FILE, O_RDONLY)) < 0){
-        printf("uboot open file failed :(");
+        printf("uboot open file failed :(\n");
         return -1;
     }
     if (read(fd, uboot, UBOOT_SIZE) < 1){
-        printf("uboot read failed :(");
+        printf("uboot read failed :(\n");
         return -1;
     }
     close(fd);
@@ -156,7 +178,23 @@ int main(){
     printf("uboot memory writed!\n");
     free(uboot);
 
-
+    char *kernel = (char*)malloc(KERNEL_SIZE*sizeof(char));
+    if ((fd = open(KERNEL_FILE, O_RDONLY)) < 0){
+        printf("kernel open file failed :(\n");
+        return -1;
+    }
+    if (read(fd, kernel, KERNEL_SIZE) < 1){
+        printf("kernel read failed :(\n");
+        return -1;
+    }
+    close(fd);
+    err = uc_mem_write(engine, KERNEL_OFFSET, kernel, KERNEL_SIZE);
+    if (err) {
+        printf("Failed write kernel with error returned %u: %s\n", err, uc_strerror(err));
+        return -1;
+    }
+    printf("kernel memory writed!\n");
+    free(kernel);
 
     uc_hook mem_unmapped_read_hook;
     err = uc_hook_add(engine, &mem_unmapped_read_hook,
@@ -179,7 +217,7 @@ int main(){
         device* dev = devices[i];
         printf("adding device %d: %s...\n", i, dev->name);
         err = uc_mem_map(engine, dev->address, dev->size, UC_PROT_READ | UC_PROT_WRITE);
-        if(err){
+        if(err && (dev->address < RAM_OFFSET)){
             printf("Adding device %d: mapping memory failed with error %u: %s!\n", i, err, uc_strerror(err));
             continue;
         }
@@ -203,8 +241,27 @@ int main(){
     // udbserver(engine, 1235, BOOTVECTOR_RESET);
     // printf("Done!\n");
 
-    printf("Starting emulator...\n");
+    printf("Fixing kernel arguments...");
+    uint32_t r_fdt_offset;
+    uint32_t fdt_new_offset = KERNEL_OFFSET + 0xe000000;
+    uint32_t kernel_load_address, kernel_end_address;
+    uc_mem_read(engine, KERNEL_OFFSET + 0x28, &kernel_load_address, sizeof(kernel_load_address));
+    uc_mem_read(engine, KERNEL_OFFSET + 0x2c, &kernel_end_address, sizeof(kernel_end_address));
+    uint32_t kernel_size = kernel_end_address - kernel_load_address;
+    r_fdt_offset = KERNEL_OFFSET + kernel_size;
+    uint32_t dtb_size;
+    uc_mem_read(engine, r_fdt_offset+0x4, &dtb_size, sizeof(dtb_size));
+    dtb_size = CPU_TO_FDT32(dtb_size);
+    uint32_t buffer;
+    for(uint32_t i = 0; i < dtb_size; i += sizeof(buffer)){
+        uc_mem_read(engine, r_fdt_offset + i, &buffer, sizeof(buffer));
+        uc_mem_write(engine, fdt_new_offset + i, &buffer, sizeof(buffer));
+    }
+    uc_reg_write(engine, UC_ARM_REG_R2, &fdt_new_offset);
+    printf("Done!\n");
 
+    printf("Starting emulator...\n");
+    signal(SIGINT, emu_exit);
     err=uc_emu_start(engine, BOOTVECTOR_RESET, 0xffffffff, 0, 0);
     if (err) {
         printf("Failed on uc_emu_start() with error returned %u: %s\n",

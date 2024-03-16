@@ -1,7 +1,7 @@
 
 OUT := emu
 OBJECTS := $(patsubst %.c,%.o,$(shell find -name "*.c" -type f ! -path "./test/*"))
-CFLAGS := -I. -Wall -Wextra -lunicorn
+CFLAGS := -I. -Wall -Wextra -lunicorn -lSDL2
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
 endif
