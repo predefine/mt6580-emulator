@@ -15,17 +15,17 @@ endif
 all: getObjects emu
 
 $(OUT): $(OBJS)
-	gcc $^ $(CFLAGS) -o $@
+	$(CC) $^ $(CFLAGS) -o $@
 
 %.o: %.c
-	gcc $< $(CFLAGS) -o $@ -c
+	$(CC) $< $(CFLAGS) -o $@ -c
 
 %.d: %.c
-	gcc -MM $< $(CFLAGS) -MT $(patsubst %.d,%.o,$@) -o $@
+	$(CC) -MM $< $(CFLAGS) -MT $(patsubst %.d,%.o,$@) -o $@
 
 
 clean:
-	rm -f $(DEPS) $(OBJS)
+	rm -f $(DEPS) $(OBJS) $(OUT)
 
 getObjects: $(DEPS)
-include $(wildcard $(DEPS))
+include $(DEPS)
