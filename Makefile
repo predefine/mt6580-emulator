@@ -4,7 +4,7 @@ DIRS := src devices dtc/libfdt
 SRCS := $(shell find $(DIRS) -name "*.c" -type f)
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 DEPS := $(patsubst %.c,%.d,$(SRCS))
-CFLAGS := -Iinclude -Wall -Wextra -lunicorn -lSDL2 -Idtc/libfdt
+CFLAGS := -Iinclude -Wall -Wextra -lunicorn -lcsfml-graphics -lcsfml-system -Idtc/libfdt
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
 	ifeq ($(DEBUG),m)
