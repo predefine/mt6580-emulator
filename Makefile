@@ -1,20 +1,31 @@
 
 OUT := emu
 DIRS := src devices dtc/libfdt
-OBJECTS := $(patsubst %.c,%.o,$(shell find $(DIRS) -name "*.c" -type f))
+SRCS := $(shell find $(DIRS) -name "*.c" -type f)
+OBJS := $(patsubst %.c,%.o,$(SRCS))
+DEPS := $(patsubst %.c,%.d,$(SRCS))
 CFLAGS := -Iinclude -Wall -Wextra -lunicorn -lSDL2 -Idtc/libfdt
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
-endif
-ifeq ($(DEBUG),m)
-	CFLAGS += -DDEBUG_MEM
+	ifeq ($(DEBUG),m)
+		CFLAGS += -DDEBUG_MEM
+	endif
 endif
 
-$(OUT): $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS)
+all: getObjects emu
+
+$(OUT): $(OBJS)
+	gcc $^ $(CFLAGS) -o $@
 
 %.o: %.c
-	$(CC) -c -o $@ $< $(CFLAGS)
+	gcc $< $(CFLAGS) -o $@ -c
+
+%.d: %.c
+	gcc -MM $< $(CFLAGS) -MT $(patsubst %.d,%.o,$@) -o $@
+
 
 clean:
-	rm -f $(OBJECTS) $(OUT)
+	rm -f $(DEPS) $(OBJS)
+
+getObjects: $(DEPS)
+include $(wildcard $(DEPS))
