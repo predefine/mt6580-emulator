@@ -2,7 +2,6 @@
 #include <devices.h>
 #include <signal.h>
 #include <unicorn/unicorn.h>
-#include <pthread.h>
 #include <SFML/Graphics.h>
 #include <SFML/System.h>
 
