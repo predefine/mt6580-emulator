@@ -4,6 +4,7 @@
 #include <unicorn/unicorn.h>
 #include <pthread.h>
 #include <SFML/Graphics.h>
+#include <SFML/System.h>
 
 #define WIDTH 800
 #define HEIGHT 1280
@@ -13,10 +14,10 @@ sfRenderWindow* window;
 sfImage* fbImage;
 sfTexture* fbTexture;
 sfSprite* fbSprite;
-pthread_t render_thread;
-pthread_attr_t render_thread_attr;
+sfThread* render_thread;
+uint8_t update;
 
-void* framebuffer_update(void* arg);
+void framebuffer_update(void* arg);
 
 void framebuffer_init(uc_engine* uc, void* devptr){
     (void)uc;
@@ -36,18 +37,18 @@ void framebuffer_init(uc_engine* uc, void* devptr){
     fbSprite = sfSprite_create();
     if(!fbSprite)
         PANIC_MSG("CSFML sprite create failed!\n");
-    pthread_attr_init(&render_thread_attr);
-    pthread_create(&render_thread, &render_thread_attr, framebuffer_update, NULL);
-    pthread_detach(render_thread);
+    update = 1;
+    render_thread = sfThread_create(framebuffer_update, NULL);
+    sfThread_launch(render_thread);
 }
 
-void* framebuffer_update(void* arg){
+void framebuffer_update(void* arg){
     (void)arg;
     sfEvent event;
-    while(sfRenderWindow_isOpen(window)){
+    while(update && window && sfRenderWindow_isOpen(window)){
         while(sfRenderWindow_pollEvent(window, &event))
             if(event.type == sfEvtClosed)
-                raise(SIGINT);
+                raise(SIGINT); // run emu_exit()
         sfRenderWindow_clear(window, (sfColor){});
         sfTexture_updateFromImage(fbTexture, fbImage, 0, 0);
         sfSprite_setTexture(fbSprite, fbTexture, 0);
@@ -55,7 +56,6 @@ void* framebuffer_update(void* arg){
         sfRenderWindow_display(window);
         sfSleep((sfTime){.microseconds = 1000000 / FPS});
     }
-    return NULL;
 }
 
 void framebuffer_callback(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long valuel, void* user_data){
@@ -80,6 +80,7 @@ void framebuffer_callback(uc_engine* uc, uc_mem_type type, uint64_t address, int
 void framebuffer_exit(uc_engine* uc, void* devptr){
     (void)uc;
     (void)devptr;
+    update = 0;
     sfRenderWindow_destroy(window);
 }
 
