@@ -55,7 +55,7 @@ void timer_tick(){
 #define register_to_gpt_number(reg) ((int)reg)>>4
 #define register_to_gpt_action(reg) ((gpt_timer_action)(((int)reg) & 0xf)>>2)
 
-void timers_gpt_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long valuel, void* user_data){
+void timers_gpt_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t valuel, void* user_data){
     timer_tick();
     device* dev = (device*) user_data;
     (void)dev;

@@ -1,4 +1,6 @@
 
+TARGET_OS ?= $(OS)
+
 OUT := emu
 DIRS := src devices dtc/libfdt
 SRCS := $(shell find $(DIRS) -name "*.c" -type f)
@@ -11,6 +13,9 @@ ifneq ($(DEBUG),)
 	ifeq ($(DEBUG),m)
 		CFLAGS += -DDEBUG_MEM
 	endif
+endif
+ifeq ($(TARGET_OS),Windows_NT)
+	LIBS += ws2_32
 endif
 
 all: getObjects emu
