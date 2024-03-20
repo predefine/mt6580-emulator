@@ -4,7 +4,8 @@ DIRS := src devices dtc/libfdt
 SRCS := $(shell find $(DIRS) -name "*.c" -type f)
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 DEPS := $(patsubst %.c,%.d,$(SRCS))
-CFLAGS := -Iinclude -Wall -Wextra -lunicorn -lcsfml-graphics -lcsfml-system -Idtc/libfdt
+CFLAGS := -Iinclude -Wall -Wextra -Idtc/libfdt
+LIBS := unicorn csfml-graphics csfml-system
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
 	ifeq ($(DEBUG),m)
@@ -15,7 +16,7 @@ endif
 all: getObjects emu
 
 $(OUT): $(OBJS)
-	$(CC) $^ $(CFLAGS) -o $@
+	$(CC) $^ $(CFLAGS) $(addprefix -l,$(LIBS)) -o $@
 
 %.o: %.c
 	$(CC) $< $(CFLAGS) -o $@ -c
