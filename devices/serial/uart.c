@@ -14,8 +14,13 @@ void init_terminal()
     tcsetattr(0, TCSANOW, &term);
 }
 
-void serial_uart_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
+void serial_uart_init(uc_engine* uc, void* devptr){
+    (void)uc;
+    (void)devptr;
     init_terminal();
+}
+
+void serial_uart_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
     device* dev = (device*) user_data;
     (void)dev;
     (void)uc;
@@ -44,6 +49,7 @@ const device devices_serial_uart0 = {
     .address = 0x11005000,
     .size = 0x1000,
     .callback = serial_uart_callback,
+    .init = serial_uart_init,
     .name = "Serial.UART0"
 };
 
@@ -51,5 +57,6 @@ const device devices_serial_uart1 = {
     .address = 0x11006000,
     .size = 0x1000,
     .callback = serial_uart_callback,
+    .init = serial_uart_init,
     .name = "Serial.UART1"
 };
