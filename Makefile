@@ -29,4 +29,4 @@ clean:
 	rm -f $(DEPS) $(OBJS) $(OUT)
 
 getObjects: $(DEPS)
-include $(DEPS)
+include $(wildcard $(DEPS))
