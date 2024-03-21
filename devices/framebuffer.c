@@ -83,11 +83,10 @@ void framebuffer_exit(uc_engine* uc, void* devptr){
     sfRenderWindow_destroy(window);
 }
 
-device devices_framebuffer = {
+DEVICE(DISPLAY_FRAMEBUFFER, {
     .address = FRAMEBUFFER_ADDRESS,
     .size = WIDTH*HEIGHT*4,
     .init = framebuffer_init,
     .callback = framebuffer_callback,
     .exit = framebuffer_exit,
-    .name = "Display.Framebuffer"
-};
+});

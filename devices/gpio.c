@@ -19,24 +19,20 @@ void devices_gpio_hook (uc_engine* uc, uc_mem_type type, uint64_t address, int s
         DEBUG_MSG("[%s] address 0x%lx was %s!\n",dev->name, address, type == UC_MEM_READ ? "readed":"writed");
 }
 
-
-const device devices_gpio = {
+DEVICE(Gpio, {
     .address = 0x10005000,
     .size = 0x1000,
-    .callback = devices_gpio_hook,
-    .name = "Gpio"
-};
-const device devices_gpio_bottom = {
+    .callback = devices_gpio_hook
+});
+
+DEVICE(Gpio_Bottom, {
     .address = 0x10015000,
     .size = 0x1000,
-    .callback = devices_gpio_hook,
-    .name = "Gpio.Bottom"
-};
+    .callback = devices_gpio_hook
+});
 
-const device devices_gpio_right = {
+DEVICE(Gpio_Right, {
     .address = 0x10017000,
     .size = 0x1000,
-    .callback = devices_gpio_hook,
-    .name = "Gpio.Right"
-};
-
+    .callback = devices_gpio_hook
+});

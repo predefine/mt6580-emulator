@@ -9,9 +9,8 @@ void mcucfg_init(uc_engine* uc, void* devptr){
 }
 
 
-const device devices_mcucfg = {
+DEVICE(MCUCFG, {
     .address = 0x10200000,
     .size = 0x1000,
     .init = mcucfg_init,
-    .name = "Mcucfg"
-};
+});

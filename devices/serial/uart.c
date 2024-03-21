@@ -45,18 +45,16 @@ void serial_uart_callback (uc_engine* uc, uc_mem_type type, uint64_t address, in
     }
 }
 
-const device devices_serial_uart0 = {
+DEVICE(SERIAL_UART0, {
     .address = 0x11005000,
     .size = 0x1000,
     .callback = serial_uart_callback,
     .init = serial_uart_init,
-    .name = "Serial.UART0"
-};
+});
 
-const device devices_serial_uart1 = {
+DEVICE(SERIAL_UART1, {
     .address = 0x11006000,
     .size = 0x1000,
     .callback = serial_uart_callback,
     .init = serial_uart_init,
-    .name = "Serial.UART1"
-};
+});

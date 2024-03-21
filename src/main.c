@@ -1,13 +1,13 @@
 #include <unicorn/unicorn.h>
 #include <unicorn/arm.h>
 #include <log.h>
-// #include <udbserver.h>
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <devices.h>
 #include <libfdt.h>
+#include <byteswap.h>
 
 #define BOOTVECTOR_RESET KERNEL_OFFSET
 
@@ -26,9 +26,8 @@
 
 #define SRAM_OFFSET 0x0100000
 #define SRAM_SIZE 64*1024
-uint32_t be32_to_le(uint32_t num){
-    return ((num>>24)&0xff) | ((num<<8)&0xff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000);
-}
+
+#define be64_to_le(val) __bswap_64(val)
 
 void mem_read_unmapped(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
     (void)uc;
@@ -57,10 +56,14 @@ uc_engine* engine;
 
 void emu_exit(){
     printf("Emulator terminating...\n");
-    for(int i = 0; devices[i] != NULL; i++){
-        device* dev = devices[i];
+    devices_list* devices = (devices_list*)get_devices();
+    for(;;){
+        device* dev = devices->this;
         if(dev->exit)
             dev->exit(engine, (void*)dev);
+        devices = devices->next;
+        if(!devices)
+            break;
     }
     exit(0);
 }
@@ -117,21 +120,25 @@ void map_mem_and_load_file(char* filename, uint64_t address, uint64_t size){
 }
 
 void devices_probe(){
-    for(int i = 0; devices[i] != NULL; i++){
-        device* dev = devices[i];
-        printf("adding device %d: %s...\n", i, dev->name);
+    devices_list* devices = (devices_list*)get_devices();
+    for(;;){
+        device* dev = devices->this;
+        printf("Adding device %s...\n", dev->name);
         map_mem(dev->address, dev->size, 1);
         if(dev->callback){
-            printf("Adding device %d callback...\n", i);
+            printf("Adding device callback...\n");
             uc_hook* hook = malloc(sizeof(uc_hook));
             uc_err err = uc_hook_add(engine, hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, dev->callback, dev, dev->address,
                     dev->address + dev->size - 1);
             if (err){
-                printf("Adding device %d: adding hook failed with error %u!\n", i, err);
+                printf("Adding device hook failed with error %u!\n", err);
             }
         }
         if(dev->init)
             dev->init(engine, (void*)dev);
+        devices = devices->next;
+        if(!devices)
+            break;
     }
 }
 
@@ -189,8 +196,8 @@ void setup_dtb(uint32_t dtb_offset){
     int offset = fdt_path_offset(fdt, "/chosen");
     if(offset < 0)
         PANIC_MSG("error %s!\n", fdt_strerror(offset));
-    uint64_t videol_fb = be32_to_le(FRAMEBUFFER_ADDRESS);
-    fdt_setprop_cell(fdt, offset, "atag,videolfb", videol_fb);
+    uint64_t videol_fb = be64_to_le(FRAMEBUFFER_ADDRESS);
+    fdt_setprop_u64(fdt, offset, "atag,videolfb", videol_fb);
     uc_mem_write(engine, dtb_offset, fdt, dtb_size + 0x10000);
     free(fdt);
 }
@@ -214,6 +221,7 @@ int main(){
     setup_dtb(KERNEL_DTB_OFFSET);
 
     emu_start(BOOTVECTOR_RESET);
+    emu_exit();
 
     return 0;
 }

@@ -11,9 +11,8 @@ void efuse_init(uc_engine* uc, void* devptr){
     DEBUG_MSG("Efuse writed!\n");
 }
 
-const device devices_efuse = {
+DEVICE(EFUSE, {
     .address = 0x10009000,
     .size = 0x1000,
-    .name = "Efuse",
     .init = efuse_init
-};
+});

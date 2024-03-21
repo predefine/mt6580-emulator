@@ -115,10 +115,9 @@ void timers_gpt_init(uc_engine* uc, void* devptr){
 }
 
 
-const device devices_timers_gpt = {
+DEVICE(TIMERS_GPT, {
     .address = 0x10008000,
     .size = 0x400,
     .callback = timers_gpt_callback,
-    .init = timers_gpt_init,
-    .name = "Timers.GPT"
-};
+    .init = timers_gpt_init
+});

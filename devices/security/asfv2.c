@@ -17,9 +17,8 @@ void security_asfv2_callback (uc_engine* uc, uc_mem_type type, uint64_t address,
     }
 }
 
-const device devices_security_asfv2 = {
+DEVICE(SECURITY_ASFV2, {
     .address = 0x1000a000,
     .size = 0x1000,
     .callback = security_asfv2_callback,
-    .name = "Security.Asfv2"
-};
+});

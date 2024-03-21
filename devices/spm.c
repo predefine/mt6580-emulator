@@ -16,9 +16,8 @@ void spm_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, 
     }
 }
 
-const device devices_spm = {
+DEVICE(SPM, {
     .address = 0x10006000,
     .size = 0x1000,
     .callback = spm_callback,
-    .name = "SPM"
-};
+});

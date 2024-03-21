@@ -223,18 +223,16 @@ void devices_msdc_emmc_init(uc_engine* uc, void* devptr){
         msdc_devices[0].mmc_size = 0;
 }
 
-const device devices_msdc_emmc = {
+DEVICE(MSDC_EMMC, {
     .address = 0x11120000,
     .size = 0x1000,
     .callback = devices_msdc_emmc_callback,
-    .init = devices_msdc_emmc_init,
-    .name = "Msdc.EMMC"
-};
+    .init = devices_msdc_emmc_init
+});
 
-const device devices_msdc_sdcard = {
+DEVICE(MSDC_SDCARD, {
     .address = 0x11130000,
     .size = 0x1000,
     .callback = devices_msdc_emmc_callback,
-    .init = devices_msdc_emmc_init,
-    .name = "Msdc.SD"
-};
+    .init = devices_msdc_emmc_init
+});
