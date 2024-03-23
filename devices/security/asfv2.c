@@ -1,7 +1,7 @@
 #include <devices.h>
 #include <unicorn/unicorn.h>
 
-void security_asfv2_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
+void security_asfv2_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data){
     device* dev = (device*) user_data;
     (void)dev;
     (void)uc;

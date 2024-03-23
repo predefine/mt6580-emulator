@@ -1,7 +1,7 @@
 #include <devices.h>
 #include <unicorn/unicorn.h>
 
-void spm_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
+void spm_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data){
     device* dev = (device*) user_data;
     (void)dev;
     (void)uc;

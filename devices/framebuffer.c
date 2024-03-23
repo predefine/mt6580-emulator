@@ -57,7 +57,7 @@ void framebuffer_update(void* arg){
     }
 }
 
-void framebuffer_callback(uc_engine* uc, uc_mem_type type, uint64_t address, int size, long valuel, void* user_data){
+void framebuffer_callback(uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t valuel, void* user_data){
     (void)uc;
     if(type != UC_MEM_WRITE) return;
     (void)size;

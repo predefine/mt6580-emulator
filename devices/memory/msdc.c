@@ -1,10 +1,15 @@
 #include <log.h>
 #include <devices.h>
-#include <netinet/in.h>
+#ifdef _WIN32
+#  include <winsock2.h>
+#else
+#  include <netinet/in.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
 #define OCR_BUSY 0x80000000
 #define OCR_HCS 0x40000000
@@ -13,7 +18,9 @@
 #define SD_BLOCK_SHIFT 9
 #define SD_BLOCKSIZE (1<<SD_BLOCK_SHIFT)
 
-#define min(a,b) ((a)<(b)?(a):(b))
+#ifndef MIN
+#  define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 typedef struct {
     char app_cmd;
@@ -139,7 +146,7 @@ void mmc_handle_cmd(msdc_device* device){
 
 }
 
-void devices_msdc_emmc_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long valuel, void* user_data){
+void devices_msdc_emmc_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t valuel, void* user_data){
     device* dev = (device*) user_data;
     uint64_t reg = ((address - dev->address)>>2)<<2;
     if(type == UC_MEM_READ){
@@ -174,7 +181,7 @@ void devices_msdc_emmc_callback (uc_engine* uc, uc_mem_type type, uint64_t addre
             break;
         case 0x14:
             value &= ~(1<<31);
-            value = min(device->data_buff.buffer_used, 0x80);
+            value = MIN(device->data_buff.buffer_used, 0x80);
             uc_mem_write(uc, address, &value, sizeof(value));
             break;
         case 0x1c:
