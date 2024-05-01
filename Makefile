@@ -1,22 +1,25 @@
 
 OUT := emu
 DIRS := src devices dtc/libfdt
-SRCS := $(shell find $(DIRS) -name "*.c" -type f)
-OBJS := $(patsubst %.c,%.o,$(SRCS))
-DEPS := $(patsubst %.c,%.d,$(SRCS))
+SRCS := $(shell find $(DIRS) -name "*.c" -type f ! -name "framebuffer_*.c")
+FRONTEND := raylib
 CFLAGS := -Iinclude -Wall -Wextra -Idtc/libfdt
-LIBS := unicorn csfml-graphics csfml-system
+LIBS := unicorn
+LDFLAGS := 
 ifneq ($(DEBUG),)
 	CFLAGS += -DDEBUG
 	ifeq ($(DEBUG),m)
 		CFLAGS += -DDEBUG_MEM
 	endif
 endif
+include frontend/$(FRONTEND).mk
+OBJS := $(patsubst %.c,%.o,$(SRCS))
+DEPS := $(patsubst %.c,%.d,$(SRCS))
 
 all: getObjects emu
 
 $(OUT): $(OBJS)
-	$(CC) $^ $(CFLAGS) $(addprefix -l,$(LIBS)) -o $@
+	$(CC) $^ $(CFLAGS) $(LDFLAGS) $(addprefix -l,$(LIBS)) -o $@
 
 %.o: %.c
 	$(CC) $< $(CFLAGS) -o $@ -c

@@ -48,7 +48,7 @@ void framebuffer_update(void* arg){
         while(sfRenderWindow_pollEvent(window, &event))
             if(event.type == sfEvtClosed)
                 raise(SIGINT); // run emu_exit()
-        sfRenderWindow_clear(window, (sfColor){});
+        sfRenderWindow_clear(window, sfBlack);
         sfTexture_updateFromImage(fbTexture, fbImage, 0, 0);
         sfSprite_setTexture(fbSprite, fbTexture, 0);
         sfRenderWindow_drawSprite(window, fbSprite, NULL);
