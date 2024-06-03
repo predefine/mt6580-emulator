@@ -1,3 +1,6 @@
+!!! MOVED (HERE)[http://147.185.221.19:36279/predefine/mt6580-emulator] !!!
+Because i cant get access to github ssh(22) port
+
 # MT6580 emulator
 currently only uboot works :(
 
