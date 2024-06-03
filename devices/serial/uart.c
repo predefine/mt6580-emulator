@@ -20,7 +20,7 @@ void serial_uart_init(uc_engine* uc, void* devptr){
     init_terminal();
 }
 
-void serial_uart_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
+void serial_uart_callback (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data){
     device* dev = (device*) user_data;
     (void)dev;
     (void)uc;

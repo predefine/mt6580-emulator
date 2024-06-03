@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <devices.h>
 #include <libfdt.h>
 #include <byteswap.h>
@@ -34,7 +35,7 @@ void mem_read_unmapped(uc_engine* uc, uc_mem_type type, uint64_t address, int si
     (void)size;
     (void)value;
     (void)user_data;
-    printf("ERROR! detected %s on unmapped 0x%lx-0x%lx\n", type == UC_MEM_READ_UNMAPPED ? "read" : "write", address, address + size);
+    printf("ERROR! detected %s on unmapped 0x%" PRIxPTR "-0x%" PRIxPTR "\n", type == UC_MEM_READ_UNMAPPED ? "read" : "write", address, address + size);
 }
 
 #ifdef DEBUG_MEM
@@ -96,7 +97,7 @@ void emu_init(){
 void map_mem(uint64_t address, uint64_t size, char ignore_err){
     uc_err err = uc_mem_map(engine, address, size, UC_PROT_ALL);
     if (err && !ignore_err)
-        PANIC_MSG("Failed map memory at 0x%lx, size 0x%lx with error returned %u: %s\n", address, size, err, uc_strerror(err));
+        PANIC_MSG("Failed map memory at 0x%" PRIxPTR ", size 0x%" PRIxPTR " with error returned %u: %s\n", address, size, err, uc_strerror(err));
 }
 
 void load_file(char* filename, uint64_t address, uint64_t size){

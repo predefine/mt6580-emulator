@@ -2,7 +2,7 @@
 #include <unicorn/unicorn.h>
 #include <log.h>
 
-void devices_gpio_hook (uc_engine* uc, uc_mem_type type, uint64_t address, int size, long value, void* user_data){
+void devices_gpio_hook (uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data){
     device* dev = (device*) user_data;
     (void)dev;
     (void)uc;
